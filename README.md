@@ -70,3 +70,7 @@
 ## バージョン
 
 v1.0.0
+
+## ライセンス
+
+[MIT License](LICENSE) © 2026 sam-okuda
