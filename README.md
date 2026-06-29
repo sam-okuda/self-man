@@ -7,8 +7,10 @@
 
 ## デモ
 
-`index.html` をブラウザで開くだけで試せます。
-（GitHub Pages を有効にすると、ブラウザ上で直接公開・閲覧できます）
+**🔗 https://sam-okuda.github.io/self-man/**
+
+上記の GitHub Pages 上でブラウザから直接お試しいただけます
+（ローカルでは `index.html` を開くだけでも動作します）。
 
 ## 特徴
 
