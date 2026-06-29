@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>有休管理 - Self Manager</title>
+<style>
+:root {
+  --bg: #f0f2f5; --card-bg: #fff; --text: #333; --text-sub: #888; --border: #e5e7eb;
+  --border-light: #f0f0f0; --hover-bg: #f8f9fb; --tab-bg: #fff; --tab-hover: #e8ecf1;
+  --input-bg: #fff; --input-border: #ddd; --track-bg: #f0f0f0;
+  --primary: #2563eb; --primary-dark: #1d4ed8; --primary-light: #dbeafe; --primary-text: #1d4ed8;
+  --danger: #ef4444; --danger-bg: #fee2e2; --danger-hover: #fecaca;
+  --success: #10b981; --warn: #f59e0b; --warn-bg: #fef3c7; --warn-text: #d97706;
+  --green-bg: #d1fae5; --green-text: #059669; --pink-bg: #fce7f3; --pink-text: #db2777;
+  --modal-bg: rgba(0,0,0,0.4);
+  --cal-used: #dbeafe; --cal-used-text: #1d4ed8; --cal-plan: #fef3c7; --cal-plan-text: #92400e;
+  --chart-used: #60a5fa; --chart-plan: #fbbf24;
+  --outline-bg: #fff; --outline-hover: #eff6ff;
+  --sim-highlight: #ecfdf5; --sim-border: #6ee7b7;
+}
+.dark {
+  --bg: #1a1a2e; --card-bg: #16213e; --text: #e0e0e0; --text-sub: #8899aa; --border: #2a3a5c;
+  --border-light: #1e2d4a; --hover-bg: #1c2e4a; --tab-bg: #16213e; --tab-hover: #1e2d4a;
+  --input-bg: #1c2e4a; --input-border: #2a3a5c; --track-bg: #1e2d4a;
+  --primary: #3b82f6; --primary-dark: #2563eb; --primary-light: #1e3a5f; --primary-text: #60a5fa;
+  --danger: #f87171; --danger-bg: #3b1c1c; --danger-hover: #4c2020;
+  --success: #34d399; --warn: #fbbf24; --warn-bg: #3b3010; --warn-text: #fbbf24;
+  --green-bg: #1a3a2a; --green-text: #34d399; --pink-bg: #3b1a2e; --pink-text: #f472b6;
+  --modal-bg: rgba(0,0,0,0.6);
+  --cal-used: #1e3a5f; --cal-used-text: #60a5fa; --cal-plan: #3b3010; --cal-plan-text: #fbbf24;
+  --chart-used: #3b82f6; --chart-plan: #f59e0b;
+  --outline-bg: #16213e; --outline-hover: #1e2d4a;
+  --sim-highlight: #1a3a2a; --sim-border: #34d399;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', 'Yu Gothic UI', 'Meiryo', sans-serif; background: var(--bg); color: var(--text); transition: background 0.3s, color 0.3s; }
+
+.app { max-width: 960px; margin: 0 auto; padding: 16px; }
+
+header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; padding: 20px 24px; border-radius: 12px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
+header div { flex: 1; }
+header h1 { font-size: 1.4rem; font-weight: 700; }
+header p { font-size: 0.85rem; opacity: 0.85; margin-top: 4px; }
+.theme-toggle { background: rgba(255,255,255,0.2); border: none; color: #fff; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 1.1rem; flex-shrink: 0; }
+.theme-toggle:hover { background: rgba(255,255,255,0.3); }
+
+.tabs { display: flex; gap: 4px; margin-bottom: 16px; background: var(--tab-bg); border-radius: 10px; padding: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); flex-wrap: wrap; }
+.tab { flex: 1; padding: 10px; text-align: center; border: none; background: none; cursor: pointer; border-radius: 8px; font-size: 0.9rem; font-weight: 500; color: var(--text-sub); transition: all 0.2s; min-width: 80px; }
+.tab.active { background: var(--primary); color: #fff; }
+.tab:hover:not(.active) { background: var(--tab-hover); }
+
+.panel { display: none; }
+.panel.active { display: block; }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.stat-card { background: var(--card-bg); border-radius: 10px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); text-align: center; }
+.stat-card .label { font-size: 0.8rem; color: var(--text-sub); margin-bottom: 6px; }
+.stat-card .value { font-size: 1.8rem; font-weight: 700; }
+.stat-card .unit { font-size: 0.8rem; color: var(--text-sub); }
+.stat-card.granted .value { color: var(--primary); }
+.stat-card.used .value { color: var(--danger); }
+.stat-card.planned .value { color: var(--warn); }
+.stat-card.remaining .value { color: var(--success); }
+
+.card { background: var(--card-bg); border-radius: 10px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 16px; }
+.card h2 { font-size: 1rem; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+
+table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+th { text-align: left; padding: 8px 10px; border-bottom: 2px solid var(--border); color: var(--text-sub); font-weight: 500; font-size: 0.78rem; }
+td { padding: 8px 10px; border-bottom: 1px solid var(--border-light); }
+tr:hover td { background: var(--hover-bg); }
+td.memo-cell { font-size: 0.78rem; color: var(--text-sub); max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 500; }
+.badge-full { background: var(--primary-light); color: var(--primary-text); }
+.badge-am { background: var(--warn-bg); color: var(--warn-text); }
+.badge-pm { background: var(--green-bg); color: var(--green-text); }
+.badge-plan { background: var(--pink-bg); color: var(--pink-text); }
+
+.form-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; margin-bottom: 12px; }
+.form-group { display: flex; flex-direction: column; gap: 4px; }
+.form-group label { font-size: 0.78rem; color: var(--text-sub); }
+.form-group input, .form-group select, .form-group textarea { padding: 8px 10px; border: 1px solid var(--input-border); border-radius: 6px; font-size: 0.85rem; font-family: inherit; background: var(--input-bg); color: var(--text); }
+.form-group textarea { resize: vertical; min-height: 36px; }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(37,99,235,0.15); }
+
+.btn { padding: 8px 16px; border: none; border-radius: 6px; font-size: 0.85rem; cursor: pointer; font-weight: 500; transition: all 0.15s; }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-dark); }
+.btn-danger { background: var(--danger-bg); color: var(--danger); }
+.btn-danger:hover { background: var(--danger-hover); }
+.btn-sm { padding: 4px 10px; font-size: 0.78rem; }
+.btn-outline { background: var(--outline-bg); color: var(--primary); border: 1px solid var(--primary); }
+.btn-outline:hover { background: var(--outline-hover); }
+
+.cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.cal-header h3 { font-size: 1rem; font-weight: 600; }
+.cal-nav { display: flex; gap: 8px; }
+.cal-nav button { width: 32px; height: 32px; border: 1px solid var(--input-border); background: var(--card-bg); color: var(--text); border-radius: 6px; cursor: pointer; font-size: 1rem; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.cal-dow { text-align: center; font-size: 0.75rem; color: var(--text-sub); padding: 4px; font-weight: 500; }
+.cal-day { text-align: center; padding: 6px 2px; border-radius: 6px; font-size: 0.82rem; cursor: default; position: relative; min-height: 44px; }
+.cal-day.empty { background: none; }
+.cal-day.today { font-weight: 700; box-shadow: inset 0 0 0 2px var(--primary); }
+.cal-day.used { background: var(--cal-used); color: var(--cal-used-text); font-weight: 600; }
+.cal-day.used-am { background: linear-gradient(135deg, var(--cal-used) 50%, transparent 50%); }
+.cal-day.used-pm { background: linear-gradient(315deg, var(--cal-used) 50%, transparent 50%); }
+.cal-day.plan { background: var(--cal-plan); color: var(--cal-plan-text); font-weight: 600; }
+.cal-day.plan-am { background: linear-gradient(135deg, var(--cal-plan) 50%, transparent 50%); }
+.cal-day.plan-pm { background: linear-gradient(315deg, var(--cal-plan) 50%, transparent 50%); }
+.cal-day.weekend { color: #aaa; }
+.cal-day.holiday { color: var(--danger); }
+.cal-day .holiday-name { position: absolute; bottom: 1px; left: 0; right: 0; font-size: 0.55rem; color: var(--danger); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1; }
+
+.legend { display: flex; gap: 16px; margin-top: 12px; font-size: 0.78rem; color: var(--text-sub); flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 4px; }
+.legend-color { width: 12px; height: 12px; border-radius: 3px; }
+
+.chart-container { padding: 8px 0; }
+.chart-bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 0.82rem; }
+.chart-bar-label { width: 55px; text-align: right; color: var(--text-sub); flex-shrink: 0; }
+.chart-bar-track { flex: 1; background: var(--track-bg); border-radius: 4px; height: 20px; }
+.chart-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s; display: flex; align-items: center; padding-left: 6px; font-size: 0.72rem; color: #fff; font-weight: 600; min-width: 0; }
+.chart-bar-fill.used { background: var(--chart-used); }
+.chart-bar-fill.planned { background: var(--chart-plan); }
+.chart-bar-val { margin-left: 6px; font-size: 0.78rem; color: var(--text-sub); flex-shrink: 0; }
+
+.year-card { display: flex; align-items: center; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--border-light); }
+.year-card:last-child { border-bottom: none; }
+
+.empty-state { text-align: center; padding: 32px; color: #aaa; font-size: 0.9rem; }
+
+.modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--modal-bg); z-index: 100; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--card-bg); border-radius: 12px; padding: 24px; width: 90%; max-width: 420px; max-height: 90vh; overflow-y: auto; }
+.modal h3 { margin-bottom: 16px; font-size: 1rem; }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+
+.reason-presets { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+.reason-preset { padding: 2px 8px; border: 1px solid var(--input-border); border-radius: 12px; font-size: 0.72rem; cursor: pointer; background: var(--card-bg); color: var(--text-sub); transition: all 0.15s; }
+.reason-preset:hover { border-color: var(--primary); color: var(--primary); }
+
+.sim-card { background: var(--sim-highlight); border: 1px solid var(--sim-border); border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; font-size: 0.85rem; }
+.sim-card strong { color: var(--success); }
+
+.help-btn { background: rgba(255,255,255,0.2); border: none; color: #fff; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 1.1rem; font-weight: 700; }
+.help-btn:hover { background: rgba(255,255,255,0.3); }
+.help-modal { max-width: 520px; }
+.help-modal h4 { font-size: 0.92rem; font-weight: 600; margin: 14px 0 6px; color: var(--primary); }
+.help-modal h4:first-child { margin-top: 0; }
+.help-modal p, .help-modal li { font-size: 0.82rem; line-height: 1.6; color: var(--text); }
+.help-modal ul { padding-left: 18px; margin-bottom: 8px; }
+
+.log-entry { display: flex; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border-light); font-size: 0.8rem; }
+.log-entry:last-child { border-bottom: none; }
+.log-time { color: var(--text-sub); flex-shrink: 0; white-space: nowrap; }
+.log-action { flex: 1; }
+.log-action .log-add { color: var(--success); }
+.log-action .log-edit { color: var(--primary); }
+.log-action .log-delete { color: var(--danger); }
+.log-action .log-status { color: var(--warn); }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <h1>有休管理 <span style="font-size:0.55rem;opacity:0.7;font-weight:400;vertical-align:middle;">v1.0.0</span></h1>
+      <p id="headerInfo"></p>
+    </div>
+    <button class="help-btn" onclick="document.getElementById('helpModal').classList.add('open')" title="ヘルプ">?</button>
+    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" title="テーマ切替">🌙</button>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="dashboard">ダッシュボード</button>
+    <button class="tab" data-tab="history">取得履歴</button>
+    <button class="tab" data-tab="plan">取得計画</button>
+    <button class="tab" data-tab="calendar">カレンダー</button>
+    <button class="tab" data-tab="chart">グラフ</button>
+    <button class="tab" data-tab="settings">設定</button>
+  </div>
+
+  <!-- Dashboard -->
+  <div class="panel active" id="dashboard">
+    <div class="stats">
+      <div class="stat-card granted"><div class="label">付与日数</div><div><span class="value" id="statGranted">0</span><span class="unit"> 日</span></div></div>
+      <div class="stat-card used"><div class="label">取得済み</div><div><span class="value" id="statUsed">0</span><span class="unit"> 日</span></div></div>
+      <div class="stat-card planned"><div class="label">計画中</div><div><span class="value" id="statPlanned">0</span><span class="unit"> 日</span></div></div>
+      <div class="stat-card remaining"><div class="label">残日数</div><div><span class="value" id="statRemaining">0</span><span class="unit"> 日</span></div></div>
+    </div>
+    <div class="card">
+      <h2 style="cursor:pointer;" onclick="toggleSim()">連休シミュレーション <span id="simToggle" style="font-size:0.78rem;color:var(--text-sub);font-weight:400;">▼</span></h2>
+      <div id="simResults"></div>
+    </div>
+    <div class="card">
+      <h2>直近の取得・予定</h2>
+      <table><thead><tr><th>日付</th><th>区分</th><th>理由</th><th>状態</th></tr></thead><tbody id="recentList"></tbody></table>
+    </div>
+    <div class="card">
+      <h2>年度情報</h2>
+      <div id="yearSummary"></div>
+    </div>
+  </div>
+
+  <!-- History -->
+  <div class="panel" id="history">
+    <div class="card">
+      <h2>取得履歴 <button class="btn btn-primary btn-sm" onclick="openAddModal('used')">+ 追加</button></h2>
+      <table><thead><tr><th>日付</th><th>区分</th><th>理由</th><th>メモ</th><th>日数</th><th></th></tr></thead><tbody id="historyList"></tbody></table>
+      <div class="empty-state" id="historyEmpty" style="display:none;">取得履歴はありません</div>
+    </div>
+  </div>
+
+  <!-- Plan -->
+  <div class="panel" id="plan">
+    <div class="card">
+      <h2>取得計画 <button class="btn btn-primary btn-sm" onclick="openAddModal('plan')">+ 追加</button></h2>
+      <table><thead><tr><th>日付</th><th>区分</th><th>理由</th><th>メモ</th><th>日数</th><th></th></tr></thead><tbody id="planList"></tbody></table>
+      <div class="empty-state" id="planEmpty" style="display:none;">取得計画はありません</div>
+    </div>
+    <div class="card">
+      <h2>消化ペース</h2>
+      <div id="paceInfo"></div>
+    </div>
+  </div>
+
+  <!-- Calendar -->
+  <div class="panel" id="calendar">
+    <div class="card">
+      <div class="cal-header">
+        <div class="cal-nav"><button onclick="calNav(-1)">&lt;</button></div>
+        <h3 id="calTitle"></h3>
+        <div class="cal-nav"><button onclick="calNav(1)">&gt;</button></div>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-color" style="background:var(--cal-used);"></div> 取得済み</div>
+        <div class="legend-item"><div class="legend-color" style="background:var(--cal-plan);"></div> 計画</div>
+        <div class="legend-item"><div class="legend-color" style="background:none;box-shadow:inset 0 0 0 2px var(--primary);"></div> 今日</div>
+        <div class="legend-item"><span style="color:var(--danger);font-weight:600;">●</span> 祝日</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart -->
+  <div class="panel" id="chart">
+    <div class="card">
+      <h2>月別取得日数</h2>
+      <div class="chart-container" id="monthlyChart"></div>
+    </div>
+    <div class="card">
+      <h2>四半期別取得日数</h2>
+      <div class="chart-container" id="quarterlyChart"></div>
+    </div>
+    <div class="card">
+      <h2>年度別推移</h2>
+      <div class="chart-container" id="yearlyChart"></div>
+      <div class="legend" id="chartLegend">
+        <div class="legend-item"><div class="legend-color" style="background:var(--chart-used);"></div> 取得済み</div>
+        <div class="legend-item"><div class="legend-color" style="background:var(--chart-plan);"></div> 計画</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings -->
+  <div class="panel" id="settings">
+    <div class="card">
+      <h2>ユーザー設定</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label>氏名</label>
+          <input type="text" id="settingName" onchange="data.name=this.value;saveData();render();">
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>年度設定 <button class="btn btn-primary btn-sm" onclick="openYearModal()">+ 年度追加</button></h2>
+      <div id="yearList"></div>
+    </div>
+    <div class="card">
+      <h2>データ管理</h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-outline" onclick="exportData()">JSON エクスポート</button>
+        <button class="btn btn-outline" onclick="exportCSV()">CSV エクスポート</button>
+        <button class="btn btn-outline" onclick="document.getElementById('importFile').click()">インポート</button>
+        <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importData(event)">
+        <button class="btn btn-danger" onclick="resetData()">データリセット</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>変更履歴 <button class="btn btn-danger btn-sm" onclick="clearLog()">履歴クリア</button></h2>
+      <div id="changeLog"></div>
+      <div class="empty-state" id="logEmpty" style="display:none;">変更履歴はありません</div>
+    </div>
+  </div>
+</div>
+
+<!-- Help Modal -->
+<div class="modal-overlay" id="helpModal">
+  <div class="modal help-modal">
+    <h3>ヘルプ</h3>
+    <h4>ダッシュボード</h4>
+    <p>付与日数・取得済み・計画中・残日数を一目で確認できます。連休シミュレーションでは、今後90日以内に有休1日で3連休以上になる日を自動計算します。</p>
+    <h4>取得履歴</h4>
+    <p>過去に取得した有休の記録です。「+ 追加」で新規登録、各行の「編集」「削除」で変更できます。「戻す」を押すと計画に戻ります。</p>
+    <h4>取得計画</h4>
+    <p>今後取得予定の有休を登録します。「確定」を押すと取得履歴に移動します。消化ペースで月あたりの取得目安を確認できます。</p>
+    <ul>
+      <li>複数日登録: 開始日と終了日を指定すると、土日を除いた平日分を一括登録します</li>
+      <li>理由の定型文: 入力欄の下のボタンからワンタップで入力できます</li>
+    </ul>
+    <h4>カレンダー</h4>
+    <p>取得済み（青）と計画（黄）を月ごとに色分け表示します。日本の祝日も赤字で表示されます。</p>
+    <h4>グラフ</h4>
+    <p>月別・四半期別・年度別の取得状況を横棒グラフで可視化します。取得の偏りを確認できます。</p>
+    <h4>設定</h4>
+    <ul>
+      <li><strong>年度設定:</strong> 付与開始日・付与日数・繰越日数を管理します。年度は複数登録可能です</li>
+      <li><strong>データ管理:</strong> JSON/CSVエクスポート、JSONインポート、データリセットが可能です</li>
+      <li><strong>変更履歴:</strong> 追加・編集・削除・状態変更の履歴を確認できます</li>
+    </ul>
+    <h4>その他</h4>
+    <ul>
+      <li>データはブラウザの localStorage に保存されます（サーバー不要）</li>
+      <li>右上の 🌙/☀️ ボタンでダークモードを切り替えられます</li>
+      <li>定期的にJSONエクスポートでバックアップを取ることをおすすめします</li>
+    </ul>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="document.getElementById('helpModal').classList.remove('open')">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <h3 id="modalTitle">有休を追加</h3>
+    <div class="form-row">
+      <div class="form-group" style="margin-bottom:10px;flex:1;">
+        <label>開始日</label>
+        <input type="date" id="modalDate">
+      </div>
+      <div class="form-group" style="margin-bottom:10px;flex:1;" id="modalEndDateGroup">
+        <label>終了日（複数日の場合）</label>
+        <input type="date" id="modalEndDate">
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:10px;">
+      <label>区分</label>
+      <select id="modalType">
+        <option value="full">全日</option>
+        <option value="am">午前半休</option>
+        <option value="pm">午後半休</option>
+      </select>
+    </div>
+    <div class="form-group" style="margin-bottom:10px;">
+      <label>理由</label>
+      <input type="text" id="modalReason" placeholder="私用のため">
+      <div class="reason-presets">
+        <span class="reason-preset" onclick="document.getElementById('modalReason').value='私用のため'">私用のため</span>
+        <span class="reason-preset" onclick="document.getElementById('modalReason').value='通院'">通院</span>
+        <span class="reason-preset" onclick="document.getElementById('modalReason').value='家族行事'">家族行事</span>
+        <span class="reason-preset" onclick="document.getElementById('modalReason').value='旅行'">旅行</span>
+        <span class="reason-preset" onclick="document.getElementById('modalReason').value='体調不良'">体調不良</span>
+        <span class="reason-preset" onclick="document.getElementById('modalReason').value='冠婚葬祭'">冠婚葬祭</span>
+        <span class="reason-preset" onclick="document.getElementById('modalReason').value='役所手続き'">役所手続き</span>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:10px;">
+      <label>メモ（申請番号・承認者など）</label>
+      <textarea id="modalMemo" placeholder="任意"></textarea>
+    </div>
+    <input type="hidden" id="modalMode">
+    <input type="hidden" id="modalEditId">
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveEntry()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Year Modal -->
+<div class="modal-overlay" id="yearModal">
+  <div class="modal">
+    <h3>年度設定</h3>
+    <div class="form-group" style="margin-bottom:10px;">
+      <label>付与開始日</label>
+      <input type="date" id="yearStart">
+    </div>
+    <div class="form-group" style="margin-bottom:10px;">
+      <label>付与日数</label>
+      <input type="number" id="yearDays" min="0" max="40" value="10">
+    </div>
+    <div class="form-group" style="margin-bottom:10px;">
+      <label>前年繰越日数</label>
+      <input type="number" id="yearCarry" min="0" max="40" step="0.5" value="0">
+    </div>
+    <input type="hidden" id="yearEditId">
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeYearModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveYear()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'selfman_leave';
+const LOG_KEY = 'selfman_log';
+const REASON_PRESETS = ['私用のため','通院','家族行事','旅行','体調不良','冠婚葬祭','役所手続き'];
+
+// --- 変更履歴 ---
+function getLog() {
+  try { return JSON.parse(localStorage.getItem(LOG_KEY) || '[]'); } catch { return []; }
+}
+function addLog(action, detail) {
+  const log = getLog();
+  const now = new Date();
+  const ts = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  log.unshift({ ts, action, detail });
+  if (log.length > 100) log.length = 100;
+  localStorage.setItem(LOG_KEY, JSON.stringify(log));
+}
+function clearLog() {
+  if (!confirm('変更履歴をクリアしますか？')) return;
+  localStorage.setItem(LOG_KEY, '[]');
+  renderLog();
+}
+function renderLog() {
+  const log = getLog();
+  const el = document.getElementById('changeLog');
+  const emptyEl = document.getElementById('logEmpty');
+  if (!log.length) { el.innerHTML = ''; emptyEl.style.display = 'block'; return; }
+  emptyEl.style.display = 'none';
+  el.innerHTML = log.slice(0, 50).map(l => {
+    const cls = l.action === '追加' ? 'log-add' : l.action === '編集' ? 'log-edit' : l.action === '削除' ? 'log-delete' : 'log-status';
+    return `<div class="log-entry"><div class="log-time">${l.ts}</div><div class="log-action"><span class="${cls}">[${l.action}]</span> ${esc(l.detail)}</div></div>`;
+  }).join('');
+}
+
+// --- Dark mode ---
+function initTheme() {
+  const saved = localStorage.getItem('selfman_theme');
+  if (saved === 'dark') { document.body.classList.add('dark'); }
+  updateThemeBtn();
+}
+function toggleTheme() {
+  document.body.classList.toggle('dark');
+  localStorage.setItem('selfman_theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+  updateThemeBtn();
+}
+function updateThemeBtn() {
+  document.getElementById('themeBtn').textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+}
+
+// --- 日本の祝日計算 ---
+function getHolidays(year) {
+  const h = {};
+  const add = (m, d, name) => { h[`${year}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`] = name; };
+  const nthMon = (m, n) => { const first = new Date(year, m - 1, 1); let dow = first.getDay(); let d = 1 + ((1 - dow + 7) % 7) + (n - 1) * 7; return d; };
+
+  add(1, 1, '元日');
+  add(1, nthMon(1, 2), '成人の日');
+  add(2, 11, '建国記念の日');
+  add(2, 23, '天皇誕生日');
+  const shunbun = year <= 2099 ? Math.floor(20.8431 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4)) : 21;
+  add(3, shunbun, '春分の日');
+  add(4, 29, '昭和の日');
+  add(5, 3, '憲法記念日');
+  add(5, 4, 'みどりの日');
+  add(5, 5, 'こどもの日');
+  add(7, nthMon(7, 3), '海の日');
+  add(8, 11, '山の日');
+  add(9, nthMon(9, 3), '敬老の日');
+  const shubun = year <= 2099 ? Math.floor(23.2488 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4)) : 23;
+  add(9, shubun, '秋分の日');
+  add(10, nthMon(10, 2), 'スポーツの日');
+  add(11, 3, '文化の日');
+  add(11, 23, '勤労感謝の日');
+
+  const keys = Object.keys(h).sort();
+  keys.forEach(dateStr => {
+    const d = new Date(dateStr);
+    if (d.getDay() === 0) {
+      let next = new Date(d);
+      next.setDate(next.getDate() + 1);
+      let nextStr = next.toISOString().slice(0, 10);
+      while (h[nextStr]) { next.setDate(next.getDate() + 1); nextStr = next.toISOString().slice(0, 10); }
+      h[nextStr] = '振替休日';
+    }
+  });
+  const sorted = Object.keys(h).sort();
+  for (let i = 0; i < sorted.length - 1; i++) {
+    const d1 = new Date(sorted[i]);
+    const d2 = new Date(sorted[i + 1]);
+    if ((d2 - d1) / 86400000 === 2) {
+      const mid = new Date(d1); mid.setDate(mid.getDate() + 1);
+      const midStr = mid.toISOString().slice(0, 10);
+      if (!h[midStr] && mid.getDay() !== 0 && mid.getDay() !== 6) h[midStr] = '国民の休日';
+    }
+  }
+  return h;
+}
+
+function isOffDay(dateStr) {
+  const d = new Date(dateStr);
+  const dow = d.getDay();
+  if (dow === 0 || dow === 6) return true;
+  const holidays = getHolidays(d.getFullYear());
+  return !!holidays[dateStr];
+}
+
+// --- 連休シミュレーション ---
+let simOpen = true;
+function toggleSim() {
+  simOpen = !simOpen;
+  document.getElementById('simResults').style.display = simOpen ? '' : 'none';
+  document.getElementById('simToggle').textContent = simOpen ? '▼' : '▶';
+}
+
+function simulateConsecutive() {
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10);
+  const entryDates = new Set(data.entries.map(e => e.date));
+  const results = [];
+  const year = getCurrentYear();
+  if (!year) return results;
+  const yearEnd = getYearEnd(year.start);
+
+  for (let offset = 0; offset < 90; offset++) {
+    const target = new Date(today);
+    target.setDate(target.getDate() + offset);
+    const targetStr = target.toISOString().slice(0, 10);
+    if (targetStr > yearEnd) break;
+    if (isOffDay(targetStr) || entryDates.has(targetStr)) continue;
+    if (target.getDay() === 0 || target.getDay() === 6) continue;
+
+    const tempDates = new Set(entryDates);
+    tempDates.add(targetStr);
+
+    let start = new Date(target);
+    while (true) {
+      const prev = new Date(start); prev.setDate(prev.getDate() - 1);
+      const prevStr = prev.toISOString().slice(0, 10);
+      if (isOffDay(prevStr) || tempDates.has(prevStr)) { start = prev; } else break;
+    }
+    let end = new Date(target);
+    while (true) {
+      const next = new Date(end); next.setDate(next.getDate() + 1);
+      const nextStr = next.toISOString().slice(0, 10);
+      if (isOffDay(nextStr) || tempDates.has(nextStr)) { end = next; } else break;
+    }
+    const consecutive = Math.round((end - start) / 86400000) + 1;
+    if (consecutive >= 3) {
+      results.push({
+        date: targetStr,
+        days: consecutive,
+        from: start.toISOString().slice(0, 10),
+        to: end.toISOString().slice(0, 10),
+        dow: ['日','月','火','水','木','金','土'][target.getDay()]
+      });
+    }
+  }
+
+  results.sort((a, b) => b.days - a.days);
+  const seen = new Set();
+  return results.filter(r => {
+    if (seen.has(r.date)) return false;
+    seen.add(r.date);
+    return true;
+  }).slice(0, 5);
+}
+
+function defaultData() {
+  return {
+    name: '山田 太郎',
+    years: [
+      { id: '1', start: '2025-09-16', days: 10, carry: 0 },
+      { id: '2', start: '2026-09-16', days: 11, carry: 0 }
+    ],
+    entries: [
+      { id: '101', date: '2025-10-06', type: 'full', reason: '私用のため', memo: '', status: 'used' },
+      { id: '102', date: '2025-10-16', type: 'am', reason: '通院のため', memo: '', status: 'used' },
+      { id: '103', date: '2025-12-10', type: 'pm', reason: '私用のため', memo: '', status: 'used' },
+      { id: '104', date: '2026-01-26', type: 'full', reason: '私用のため', memo: '', status: 'used' },
+      { id: '105', date: '2026-03-03', type: 'am', reason: '定期通院', memo: '', status: 'used' }
+    ]
+  };
+}
+
+let data;
+function loadData() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    data = JSON.parse(saved);
+    if (!data.name) data.name = '山田 太郎';
+    data.entries.forEach(e => { if (e.memo === undefined) e.memo = ''; });
+  } else {
+    data = defaultData();
+    saveData();
+  }
+}
+function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+function getCurrentYear() {
+  const today = new Date().toISOString().slice(0, 10);
+  const sorted = [...data.years].sort((a, b) => a.start.localeCompare(b.start));
+  for (let i = sorted.length - 1; i >= 0; i--) { if (sorted[i].start <= today) return sorted[i]; }
+  return sorted[0] || null;
+}
+function getYearEnd(yearStart) {
+  const d = new Date(yearStart); d.setFullYear(d.getFullYear() + 1); d.setDate(d.getDate() - 1);
+  return d.toISOString().slice(0, 10);
+}
+function entryDays(e) { return e.type === 'full' ? 1 : 0.5; }
+function getEntriesForYear(year) {
+  if (!year) return [];
+  const end = getYearEnd(year.start);
+  return data.entries.filter(e => e.date >= year.start && e.date <= end);
+}
+function calcStats(year) {
+  const entries = getEntriesForYear(year);
+  const granted = year ? (year.days + year.carry) : 0;
+  const used = entries.filter(e => e.status === 'used').reduce((s, e) => s + entryDays(e), 0);
+  const planned = entries.filter(e => e.status === 'plan').reduce((s, e) => s + entryDays(e), 0);
+  return { granted, used, planned, remaining: granted - used - planned };
+}
+
+// Tabs
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.tab).classList.add('active');
+    render();
+  });
+});
+
+// Render
+function render() {
+  const year = getCurrentYear();
+  const stats = calcStats(year);
+
+  if (year) {
+    const end = getYearEnd(year.start);
+    document.getElementById('headerInfo').textContent = `${data.name}　|　現在の年度: ${year.start} 〜 ${end}`;
+  }
+
+  document.getElementById('statGranted').textContent = stats.granted;
+  document.getElementById('statUsed').textContent = stats.used;
+  document.getElementById('statPlanned').textContent = stats.planned;
+  document.getElementById('statRemaining').textContent = stats.remaining;
+
+  // Simulation
+  const simEl = document.getElementById('simResults');
+  const sims = simulateConsecutive();
+  if (sims.length) {
+    simEl.innerHTML = sims.map(s =>
+      `<div class="sim-card">${s.date}（${s.dow}）に有休1日 → <strong>${s.days}連休</strong>（${s.from} 〜 ${s.to}）</div>`
+    ).join('');
+  } else {
+    simEl.innerHTML = '<div style="font-size:0.85rem;color:var(--text-sub);">3連休以上になる有休取得候補はありません</div>';
+  }
+
+  // Recent
+  const allEntries = [...data.entries].sort((a, b) => a.date.localeCompare(b.date));
+  const today = new Date().toISOString().slice(0, 10);
+  const recent = allEntries.filter(e => e.date >= today || e.status === 'used').slice(-5).reverse();
+  document.getElementById('recentList').innerHTML = recent.map(e => `<tr>
+    <td>${e.date}</td><td>${typeBadge(e.type)}</td><td>${esc(e.reason)}</td>
+    <td>${e.status === 'plan' ? '<span class="badge badge-plan">計画</span>' : '<span class="badge badge-full">確定</span>'}</td>
+  </tr>`).join('');
+
+  // Year summary
+  const ys = document.getElementById('yearSummary');
+  if (year) {
+    const end = getYearEnd(year.start);
+    const daysInYear = (new Date(end) - new Date(year.start)) / 86400000;
+    const elapsed = Math.max(0, (new Date(today) - new Date(year.start)) / 86400000);
+    const pct = Math.min(100, (elapsed / daysInYear) * 100);
+    ys.innerHTML = `
+      <div style="font-size:0.85rem;margin-bottom:8px;">年度期間: ${year.start} 〜 ${end}</div>
+      <div style="font-size:0.85rem;margin-bottom:4px;">付与 ${year.days}日 + 繰越 ${year.carry}日 = 合計 ${year.days + year.carry}日</div>
+      <div style="background:var(--track-bg);border-radius:6px;height:8px;margin-top:8px;">
+        <div style="background:var(--primary);height:100%;border-radius:6px;width:${pct}%;transition:width 0.3s;"></div>
+      </div>
+      <div style="font-size:0.75rem;color:var(--text-sub);margin-top:4px;">年度進捗 ${Math.round(pct)}%</div>
+    `;
+  }
+
+  // History
+  const usedEntries = data.entries.filter(e => e.status === 'used').sort((a, b) => b.date.localeCompare(a.date));
+  document.getElementById('historyEmpty').style.display = usedEntries.length ? 'none' : 'block';
+  document.getElementById('historyList').innerHTML = usedEntries.map(e => `<tr>
+    <td>${e.date}</td><td>${typeBadge(e.type)}</td><td>${esc(e.reason)}</td>
+    <td class="memo-cell" title="${esc(e.memo || '')}">${esc(e.memo || '')}</td><td>${entryDays(e)}</td>
+    <td>
+      <button class="btn btn-outline btn-sm" onclick="editEntry('${e.id}')" style="margin-right:4px;">編集</button>
+      <button class="btn btn-outline btn-sm" onclick="confirmEntry('${e.id}')" title="計画に戻す" style="margin-right:4px;">戻す</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteEntry('${e.id}')">削除</button>
+    </td>
+  </tr>`).join('');
+
+  // Plan
+  const planEntries = data.entries.filter(e => e.status === 'plan').sort((a, b) => a.date.localeCompare(b.date));
+  document.getElementById('planEmpty').style.display = planEntries.length ? 'none' : 'block';
+  document.getElementById('planList').innerHTML = planEntries.map(e => `<tr>
+    <td>${e.date}</td><td>${typeBadge(e.type)}</td><td>${esc(e.reason)}</td>
+    <td class="memo-cell" title="${esc(e.memo || '')}">${esc(e.memo || '')}</td><td>${entryDays(e)}</td>
+    <td>
+      <button class="btn btn-outline btn-sm" onclick="editEntry('${e.id}')" style="margin-right:4px;">編集</button>
+      <button class="btn btn-primary btn-sm" onclick="confirmEntry('${e.id}')" style="margin-right:4px;">確定</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteEntry('${e.id}')">削除</button>
+    </td>
+  </tr>`).join('');
+
+  renderPace(year, stats);
+  renderCalendar();
+  renderCharts(year);
+  document.getElementById('settingName').value = data.name || '';
+  renderYears();
+  renderLog();
+}
+
+function renderPace(year, stats) {
+  const el = document.getElementById('paceInfo');
+  if (!year) { el.innerHTML = '<div class="empty-state">年度が設定されていません</div>'; return; }
+  const today = new Date();
+  const end = new Date(getYearEnd(year.start));
+  const remainDays = Math.max(0, Math.ceil((end - today) / 86400000));
+  const remainMonths = Math.max(1, Math.ceil(remainDays / 30));
+  const needPerMonth = stats.remaining > 0 ? (stats.remaining / remainMonths).toFixed(1) : 0;
+  el.innerHTML = `
+    <div style="font-size:0.85rem;line-height:1.8;">
+      <div>年度終了まであと <strong>${remainDays}日</strong>（約${remainMonths}ヶ月）</div>
+      <div>残り <strong>${stats.remaining}日</strong> を消化するには、月あたり約 <strong>${needPerMonth}日</strong> の取得が目安です。</div>
+      ${stats.remaining <= 0 ? '<div style="color:var(--success);font-weight:600;margin-top:8px;">全日数の計画が完了しています</div>' : ''}
+      ${stats.remaining < 0 ? '<div style="color:var(--danger);font-weight:600;margin-top:8px;">付与日数を超過しています</div>' : ''}
+    </div>
+  `;
+}
+
+// Calendar
+let calYear, calMonth;
+function initCal() { const now = new Date(); calYear = now.getFullYear(); calMonth = now.getMonth(); }
+function calNav(dir) {
+  calMonth += dir;
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  renderCalendar();
+}
+function renderCalendar() {
+  const DAYS = ['日','月','火','水','木','金','土'];
+  document.getElementById('calTitle').textContent = `${calYear}年 ${calMonth + 1}月`;
+  const first = new Date(calYear, calMonth, 1);
+  const last = new Date(calYear, calMonth + 1, 0);
+  const startDow = first.getDay();
+  const totalDays = last.getDate();
+  const today = new Date().toISOString().slice(0, 10);
+  const holidays = getHolidays(calYear);
+  const entryMap = {};
+  data.entries.forEach(e => { entryMap[e.date] = e; });
+
+  let html = DAYS.map(d => `<div class="cal-dow">${d}</div>`).join('');
+  for (let i = 0; i < startDow; i++) html += '<div class="cal-day empty"></div>';
+  for (let d = 1; d <= totalDays; d++) {
+    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dow = (startDow + d - 1) % 7;
+    const cls = ['cal-day'];
+    if (dateStr === today) cls.push('today');
+    if (dow === 0 || dow === 6) cls.push('weekend');
+    if (holidays[dateStr]) cls.push('holiday');
+    const entry = entryMap[dateStr];
+    if (entry) {
+      const prefix = entry.status === 'used' ? 'used' : 'plan';
+      cls.push(entry.type === 'am' ? prefix+'-am' : entry.type === 'pm' ? prefix+'-pm' : prefix);
+    }
+    const hLabel = holidays[dateStr] ? `<div class="holiday-name">${holidays[dateStr]}</div>` : '';
+    html += `<div class="${cls.join(' ')}">${d}${hLabel}</div>`;
+  }
+  document.getElementById('calGrid').innerHTML = html;
+}
+
+// Charts
+function renderCharts(year) {
+  if (!year) return;
+  const entries = getEntriesForYear(year);
+  const startDate = new Date(year.start);
+  const months = [];
+  for (let i = 0; i < 12; i++) {
+    const m = new Date(startDate); m.setMonth(m.getMonth() + i);
+    months.push({ year: m.getFullYear(), month: m.getMonth() + 1 });
+  }
+  const monthData = months.map(m => {
+    const prefix = `${m.year}-${String(m.month).padStart(2,'0')}`;
+    const me = entries.filter(e => e.date.startsWith(prefix));
+    return { label: `${m.month}月`, used: me.filter(e => e.status==='used').reduce((s,e) => s+entryDays(e),0), planned: me.filter(e => e.status==='plan').reduce((s,e) => s+entryDays(e),0) };
+  });
+  const maxVal = Math.max(3, ...monthData.map(m => m.used + m.planned));
+  document.getElementById('monthlyChart').innerHTML = monthData.map(m => barRow(m.label, m.used, m.planned, maxVal)).join('');
+
+  const quarters = [
+    { label: 'Q1', months: monthData.slice(0,3) }, { label: 'Q2', months: monthData.slice(3,6) },
+    { label: 'Q3', months: monthData.slice(6,9) }, { label: 'Q4', months: monthData.slice(9,12) }
+  ];
+  const qData = quarters.map(q => ({ label: q.label, used: q.months.reduce((s,m) => s+m.used,0), planned: q.months.reduce((s,m) => s+m.planned,0) }));
+  const qMax = Math.max(5, ...qData.map(q => q.used + q.planned));
+  document.getElementById('quarterlyChart').innerHTML = qData.map(q => barRow(q.label, q.used, q.planned, qMax)).join('');
+
+  // Yearly trend
+  const sortedYears = [...data.years].sort((a,b) => a.start.localeCompare(b.start));
+  const yearlyData = sortedYears.map(y => {
+    const end = getYearEnd(y.start);
+    const ye = data.entries.filter(e => e.date >= y.start && e.date <= end);
+    const label = y.start.slice(0,4) + '-' + end.slice(2,4);
+    return { label, granted: y.days + y.carry, used: ye.filter(e => e.status==='used').reduce((s,e) => s+entryDays(e),0), planned: ye.filter(e => e.status==='plan').reduce((s,e) => s+entryDays(e),0) };
+  });
+  const yMax = Math.max(5, ...yearlyData.map(y => y.granted));
+  document.getElementById('yearlyChart').innerHTML = yearlyData.map(y => {
+    const usedPct = (y.used / yMax) * 100;
+    const plannedPct = (y.planned / yMax) * 100;
+    const total = y.used + y.planned;
+    return `<div class="chart-bar-row">
+      <div class="chart-bar-label">${y.label}</div>
+      <div class="chart-bar-track"><div style="display:flex;height:100%;">
+        <div class="chart-bar-fill used" style="width:${usedPct}%;">${y.used > 0 ? y.used : ''}</div>
+        <div class="chart-bar-fill planned" style="width:${plannedPct}%;">${y.planned > 0 ? y.planned : ''}</div>
+      </div></div>
+      <div class="chart-bar-val">${total}/${y.granted}日</div>
+    </div>`;
+  }).join('');
+}
+
+function barRow(label, used, planned, max) {
+  const uPct = (used / max) * 100, pPct = (planned / max) * 100, total = used + planned;
+  return `<div class="chart-bar-row"><div class="chart-bar-label">${label}</div>
+    <div class="chart-bar-track"><div style="display:flex;height:100%;">
+      <div class="chart-bar-fill used" style="width:${uPct}%;">${used > 0 ? used : ''}</div>
+      <div class="chart-bar-fill planned" style="width:${pPct}%;">${planned > 0 ? planned : ''}</div>
+    </div></div>
+    <div class="chart-bar-val">${total > 0 ? total + '日' : ''}</div></div>`;
+}
+
+// Year settings
+function renderYears() {
+  const el = document.getElementById('yearList');
+  const sorted = [...data.years].sort((a,b) => b.start.localeCompare(a.start));
+  el.innerHTML = sorted.map(y => `
+    <div class="year-card">
+      <div style="flex:1;">
+        <div style="font-weight:600;">${y.start} 〜 ${getYearEnd(y.start)}</div>
+        <div style="font-size:0.82rem;color:var(--text-sub);">付与 ${y.days}日 / 繰越 ${y.carry}日</div>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="editYear('${y.id}')">編集</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteYear('${y.id}')">削除</button>
+    </div>
+  `).join('');
+}
+
+// Helpers
+function typeBadge(type) {
+  if (type === 'am') return '<span class="badge badge-am">午前半休</span>';
+  if (type === 'pm') return '<span class="badge badge-pm">午後半休</span>';
+  return '<span class="badge badge-full">全日</span>';
+}
+function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+
+// Modal
+function openAddModal(status) {
+  document.getElementById('modalTitle').textContent = status === 'plan' ? '取得計画を追加' : '取得履歴を追加';
+  document.getElementById('modalDate').value = '';
+  document.getElementById('modalEndDate').value = '';
+  document.getElementById('modalEndDateGroup').style.display = '';
+  document.getElementById('modalType').value = 'full';
+  document.getElementById('modalReason').value = '';
+  document.getElementById('modalMemo').value = '';
+  document.getElementById('modalMode').value = status;
+  document.getElementById('modalEditId').value = '';
+  document.getElementById('addModal').classList.add('open');
+}
+function closeModal() { document.getElementById('addModal').classList.remove('open'); }
+
+function getWeekdaysBetween(startStr, endStr) {
+  const dates = []; const cur = new Date(startStr); const end = new Date(endStr);
+  while (cur <= end) { const dow = cur.getDay(); if (dow !== 0 && dow !== 6) dates.push(cur.toISOString().slice(0,10)); cur.setDate(cur.getDate()+1); }
+  return dates;
+}
+
+function saveEntry() {
+  const date = document.getElementById('modalDate').value;
+  if (!date) { alert('開始日を入力してください'); return; }
+  const endDate = document.getElementById('modalEndDate').value;
+  const type = document.getElementById('modalType').value;
+  const reason = document.getElementById('modalReason').value;
+  const memo = document.getElementById('modalMemo').value;
+  const status = document.getElementById('modalMode').value;
+  const editId = document.getElementById('modalEditId').value;
+  const typeLabel = type === 'full' ? '全日' : type === 'am' ? '午前半休' : '午後半休';
+  const statusLabel = status === 'plan' ? '計画' : '履歴';
+  if (editId) {
+    const entry = data.entries.find(e => e.id === editId);
+    if (entry) { entry.date = date; entry.type = type; entry.reason = reason; entry.memo = memo; }
+    addLog('編集', `${date} ${typeLabel} "${reason}" を編集`);
+  } else {
+    const dates = endDate && endDate > date ? getWeekdaysBetween(date, endDate) : [date];
+    dates.forEach(d => { data.entries.push({ id: genId(), date: d, type, reason, memo, status }); });
+    if (dates.length > 1) {
+      addLog('追加', `${statusLabel}: ${dates[0]}〜${dates[dates.length-1]}（${dates.length}日）${typeLabel} "${reason}"`);
+    } else {
+      addLog('追加', `${statusLabel}: ${date} ${typeLabel} "${reason}"`);
+    }
+  }
+  saveData(); closeModal(); render();
+}
+
+function editEntry(id) {
+  const entry = data.entries.find(e => e.id === id);
+  if (!entry) return;
+  document.getElementById('modalTitle').textContent = entry.status === 'plan' ? '取得計画を編集' : '取得履歴を編集';
+  document.getElementById('modalDate').value = entry.date;
+  document.getElementById('modalEndDate').value = '';
+  document.getElementById('modalEndDateGroup').style.display = 'none';
+  document.getElementById('modalType').value = entry.type;
+  document.getElementById('modalReason').value = entry.reason || '';
+  document.getElementById('modalMemo').value = entry.memo || '';
+  document.getElementById('modalMode').value = entry.status;
+  document.getElementById('modalEditId').value = id;
+  document.getElementById('addModal').classList.add('open');
+}
+
+function deleteEntry(id) {
+  const entry = data.entries.find(e => e.id === id);
+  if (!confirm('この記録を削除しますか？')) return;
+  if (entry) addLog('削除', `${entry.date} "${entry.reason}" を削除`);
+  data.entries = data.entries.filter(e => e.id !== id); saveData(); render();
+}
+function confirmEntry(id) {
+  const entry = data.entries.find(e => e.id === id);
+  if (entry) {
+    const from = entry.status === 'plan' ? '計画' : '履歴';
+    const to = entry.status === 'plan' ? '履歴' : '計画';
+    entry.status = entry.status === 'plan' ? 'used' : 'plan';
+    addLog('状態変更', `${entry.date} "${entry.reason}" を${from}→${to}`);
+    saveData(); render();
+  }
+}
+
+// Year modal
+function openYearModal() {
+  document.getElementById('yearStart').value = '';
+  document.getElementById('yearDays').value = 10;
+  document.getElementById('yearCarry').value = 0;
+  document.getElementById('yearEditId').value = '';
+  document.getElementById('yearModal').classList.add('open');
+}
+function closeYearModal() { document.getElementById('yearModal').classList.remove('open'); }
+function editYear(id) {
+  const y = data.years.find(y => y.id === id); if (!y) return;
+  document.getElementById('yearStart').value = y.start;
+  document.getElementById('yearDays').value = y.days;
+  document.getElementById('yearCarry').value = y.carry;
+  document.getElementById('yearEditId').value = id;
+  document.getElementById('yearModal').classList.add('open');
+}
+function saveYear() {
+  const start = document.getElementById('yearStart').value;
+  if (!start) { alert('付与開始日を入力してください'); return; }
+  const days = parseFloat(document.getElementById('yearDays').value) || 0;
+  const carry = parseFloat(document.getElementById('yearCarry').value) || 0;
+  const editId = document.getElementById('yearEditId').value;
+  if (editId) { const y = data.years.find(y => y.id === editId); if (y) { y.start = start; y.days = days; y.carry = carry; } }
+  else { data.years.push({ id: genId(), start, days, carry }); }
+  saveData(); closeYearModal(); render();
+}
+function deleteYear(id) {
+  if (!confirm('この年度設定を削除しますか？')) return;
+  data.years = data.years.filter(y => y.id !== id); saveData(); render();
+}
+
+// Export / Import
+function exportData() {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'selfman_leave_' + new Date().toISOString().slice(0,10) + '.json'; a.click();
+}
+function exportCSV() {
+  const BOM = '﻿';
+  const header = '日付,区分,理由,メモ,日数,状態';
+  const rows = [...data.entries].sort((a,b) => a.date.localeCompare(b.date)).map(e => {
+    const t = e.type === 'full' ? '全日' : e.type === 'am' ? '午前半休' : '午後半休';
+    const s = e.status === 'used' ? '取得済み' : '計画';
+    const f = (v) => '"' + (v||'').replace(/"/g,'""') + '"';
+    return `${e.date},${t},${f(e.reason)},${f(e.memo)},${entryDays(e)},${s}`;
+  });
+  const blob = new Blob([BOM + header + '\n' + rows.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'selfman_leave_' + new Date().toISOString().slice(0,10) + '.csv'; a.click();
+}
+function importData(event) {
+  const file = event.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (imported.years && imported.entries) {
+        if (confirm('現在のデータを上書きしますか？')) {
+          data = imported; data.entries.forEach(e => { if (e.memo === undefined) e.memo = ''; });
+          saveData(); render();
+        }
+      } else { alert('無効なデータ形式です'); }
+    } catch { alert('ファイルの読み込みに失敗しました'); }
+  };
+  reader.readAsText(file); event.target.value = '';
+}
+function resetData() {
+  if (!confirm('すべてのデータを初期状態に戻しますか？')) return;
+  if (!confirm('本当にリセットしますか？この操作は取り消せません。')) return;
+  data = defaultData(); saveData(); render();
+}
+
+// Init
+initTheme();
+loadData();
+initCal();
+render();
+</script>
+</body>
+</html>
